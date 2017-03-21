@@ -1,0 +1,77 @@
+<h3>Коллекции</h3>
+Разработчики, перешедшие на Swift с Objective-C, не могли не заметить удобнейший функционал, который предоставляет Swift для работы с коллекциями. Использование диапазонов в индексах <source lang="swift">let slice = array[1..<10]</source> удобный синтаксис инициализации и добавления элемента в коллекцию, расширяемость, и, конечно функции высшего порядка
+
+<h4>Filter</h4>
+Самой часто используемой функцией для коллекций, пожалуй, является filter
+<source lang="swift">let alex = Person(name: "Alex", age: 23)
+let jenny = Person(name: "Jenny", age: 20)
+let jason = Person(name: "Jason", age: 35)
+let persons = [alex, jenny, jason]
+let jNamedPersons = persons.filter { $0.name.hasPrefix("J") } // [jenny, jason]</source>
+
+<h4>Reduce</h4>
+Реже используемой, но при этом крайне выразительной и удобной является функция reduce
+<source lang="swift">
+let ages = persons.map{ Float($0.age) }
+let average = ages.reduce(0, +) / Float(persons.count)</source>
+
+Можно писать свои функции высшего порядка и это довольно увлекательно:
+<source lang="swift">func divisible(by numbers: Int...) -> (Int) -> Bool {
+    return { input -> Bool in
+        return numbers.reduce(true) { divisible, number in
+            divisible && input % number == 0
+        }
+    }
+}
+
+let items = [6, 12, 24, 13]
+let result = items.filter(divisible(by: 2, 3, 4)) // [12, 24]</source>
+
+<h4>Map</h4>
+Функциональные понятия функторов и монад пришли к нам из языка Haskell. Говорят, невозможно просто взять и понять, что такое монада, а уж тем более невозможно это объяснить. Тем не менее мы можем временно отбросить все сложности и объяснить себе только то, что действительно необходимо, а те, кто захочет закопаться поглубже, могут начать с изучения Haskell.
+
+Итак, для простоты мы можем считать, что функтор это контейнер, к которому применима функция map, а монада это функтор, к которому применима функция flatMap.
+
+Поскольку коллекции это контейнеры, и в Swift для них определена функция map, они могут выступать в роли функторов:
+для того, чтобы трансформировать коллекцию одного типа в коллекцию другого типа, возьмем наш массив persons и получим из него массив возрастов типа [Int]
+<source lang="swift">let ages = array.map{ $0.age } // [23, 20, 35]</source>
+
+<h4>FlatMap</h4>
+И в роли монад:
+для того, чтобы из массива oprtional типов вернуть массив не опциональных значений
+<source lang="swift">let optionalStrings: [String?] = ["a", nil, "b", "c", nil]
+let strings = optionalStrings.flatMap { $0 } // ["a", "b", "c"]</source>
+для того, чтобы расширить первоначальную коллекцию
+<source lang="swift">let odds = [1,3,5,7,9]
+let evensAndOdds = odds.flatMap { [$0, $0 + 1] } // [1,2,3,4,5,6,7,8,9,10]</source>
+<habracut/>
+
+<h3>Optionals</h3>
+Но map и flatMap можно применять не только к коллекциям. Крайне полезным оказывается использование Optional типов в качестве монад:
+
+<h4>Map</h4>
+Если у Optional есть значение, то возвращается результат работы map с этим значением, если же значения нет, то возвращается nil:
+<source lang="swift">let name: String? = "World"
+let greeting = name.map { "Hello " + $0 + "!" } // "Hello World!"</source>
+но <source lang="swift">let name: String? = nil
+let greeting = name.map { "Hello " + $0 + "!" } // nil </source>
+
+<h4>FlatMap</h4>
+FlatMap работает почти так же, с той лишь разницей, что результат работы flatMap может возвращать nil, а map не может
+
+<source lang="swift">let string: String? = "42"
+let number = string.flatMap { Int($0) } // 42</source>
+<spoiler title="но со строкой 'сорок два' Int себя инициализировать  не может">
+Int не может, но Swift может многое
+<source lang="swift">let formatter = NumberFormatter()
+formatter.numberStyle = .spellOut
+formatter.locale = Locale(identifier: "RU")
+let a = formatter.number(from: "сорок два")</source> // 42
+</spoiler>
+<source lang="swift">let string: String? = "сорок два"
+let number: Int? = string.flatMap { Int($0) } // nil</source>
+если же мы попытаемся применить map
+<source lang="swift">let number: Int? = string.map { Int($0) }</source> увидим ошибку.
+
+<h3>Заключение</h3>
+Использование монад и функторов при работе с Optional переменными может значительно уменьшить объем кода и сделать его более наглядным.
